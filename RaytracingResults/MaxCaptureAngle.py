@@ -4,10 +4,12 @@ import matplotlib.pyplot as plt
 import json
 import pandas as pd
 
-def ExtractPowerAndRays(file, fullPath):
+def ExtractPowerAndAngles(file, fullPath):
     with open(os.path.join(fullPath, file), "r") as f:
         data = json.load(f)
-        
+    
+    print(data)
+    
     Stats = data["Stats"]
     
     return [Stats["CapturedPower"], Stats["StartRays"], Stats["CapturedRays"]]
@@ -30,6 +32,8 @@ def ExtractData(commonPath, specificPaths : list[str]):
         path = specificPaths[i]
         
         fullDataPath = os.path.join(commonPath, "Data", path)
+        
+        print(fullDataPath)
         
         files = [f for f in os.listdir(fullDataPath) if os.path.isfile(os.path.join(fullDataPath, f))]
         
