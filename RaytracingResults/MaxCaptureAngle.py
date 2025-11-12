@@ -12,7 +12,7 @@ def ExtractPowerAndAngles(file, fullPath):
     
     Stats = data["Stats"]
     
-    return [Stats["CapturedPower"], Stats["StartRays"], Stats["CapturedRays"]]
+    return [Stats["Angle"], Stats["Power"]]
 
 
 def ExtractData(commonPath, specificPaths : list[str]):
@@ -41,11 +41,10 @@ def ExtractData(commonPath, specificPaths : list[str]):
             
             f = files[j]
             
-            data = ExtractPowerAndRays(f, fullDataPath)
+            data = ExtractPowerAndAngles(f, fullDataPath)
             
-            dataframe.loc[j, f"{path}_CapturedPower"] = data[0]
-            dataframe.loc[j, f"{path}_CapturedRays"] = data[1]
-            dataframe.loc[j, f"{path}_StartRays"] = data[2]
+            dataframe[f"{path}_Angle"] = data[0]
+            dataframe[f"{path}_Power"] = data[1]
         
     print(dataframe)
     
