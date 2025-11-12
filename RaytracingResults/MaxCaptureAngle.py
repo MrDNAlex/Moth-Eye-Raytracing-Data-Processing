@@ -12,13 +12,6 @@ def ExtractPowerAndAngles(file, fullPath):
 
 
 def ExtractData(commonPath, specificPaths : list[str]):
-    #cols = []
-    
-    #for path in specificPaths:
-    #    cols.append(path + "_CapturedPower")
-    #    cols.append(path + "_CapturedRays")
-    #    cols.append(path + "_StartRays")
-    
     dataframe = pd.DataFrame()
     
     for i in range(len(specificPaths)):
