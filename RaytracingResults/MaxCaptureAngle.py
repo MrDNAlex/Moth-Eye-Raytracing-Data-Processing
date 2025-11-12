@@ -2,7 +2,54 @@ import os
 import re 
 import matplotlib.pyplot as plt
 import json
+import pandas as pd
 
+def ExtractPowerAndRays(file, fullPath):
+    with open(os.path.join(fullPath, file), "r") as f:
+        data = json.load(f)
+        
+    Stats = data["Stats"]
+    
+    return [Stats["CapturedPower"], Stats["StartRays"], Stats["CapturedRays"]]
+
+
+def ExtractData(commonPath, specificPaths : list[str]):
+    cols = []
+    
+    for path in specificPaths:
+        cols.append(path + "_CapturedPower")
+        cols.append(path + "_CapturedRays")
+        cols.append(path + "_StartRays")
+    
+    dataframe = pd.DataFrame(columns=cols)
+    
+    print(dataframe)
+    
+    for i in range(len(specificPaths)):
+        
+        path = specificPaths[i]
+        
+        fullDataPath = os.path.join(commonPath, "Data", path)
+        
+        files = [f for f in os.listdir(fullDataPath) if os.path.isfile(os.path.join(fullDataPath, f))]
+        
+        for j in range(len(files)):
+            
+            f = files[j]
+            
+            data = ExtractPowerAndRays(f, fullDataPath)
+            
+            dataframe.loc[j, f"{path}_CapturedPower"] = data[0]
+            dataframe.loc[j, f"{path}_CapturedRays"] = data[1]
+            dataframe.loc[j, f"{path}_StartRays"] = data[2]
+        
+    print(dataframe)
+    
+    dataframe.to_csv("Test.csv")
+    
+    #PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "MothEye")
+    #PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "Regular")
+    
 def PlotMaxCaptureAngle(commonPath, specificPath):
     
     fullDataPath = os.path.join(commonPath, "Data", specificPath)
@@ -130,3 +177,4 @@ def PlotMaxCaptureAngleFullComparison(commonPath, specificPath1, specificPath2):
     plt.savefig(f"{fullPlotPath}/Full_Comparison_Power_vs_Angle_Waveguide_Layers.png")
     plt.close()
 
+ExtractData("RaytracingResults/MaxCaptureAngle", ["MothEye", "Regular"])
