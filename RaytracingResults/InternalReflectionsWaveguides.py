@@ -3,6 +3,14 @@ import re
 import matplotlib.pyplot as plt
 import json
 
+def ExtractPowerAndRays(file, fullPath):
+    with open(os.path.join(fullPath, file), "r") as f:
+        data = json.load(f)
+        
+    Stats = data["Stats"]
+    
+    return [Stats["CapturedPower"], Stats["StartRays"], Stats["CapturedRays"]]
+
 def GetPowerFromFile(file, fullPath):
     
     with open(os.path.join(fullPath, file), "r") as f:
