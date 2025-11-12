@@ -8,22 +8,18 @@ def ExtractPowerAndAngles(file, fullPath):
     with open(os.path.join(fullPath, file), "r") as f:
         data = json.load(f)
     
-    print(data)
-    
-    Stats = data["Stats"]
-    
-    return [Stats["Angle"], Stats["Power"]]
+    return [data["Angle"], data["Power"]]
 
 
 def ExtractData(commonPath, specificPaths : list[str]):
-    cols = []
+    #cols = []
     
-    for path in specificPaths:
-        cols.append(path + "_CapturedPower")
-        cols.append(path + "_CapturedRays")
-        cols.append(path + "_StartRays")
+    #for path in specificPaths:
+    #    cols.append(path + "_CapturedPower")
+    #    cols.append(path + "_CapturedRays")
+    #    cols.append(path + "_StartRays")
     
-    dataframe = pd.DataFrame(columns=cols)
+    dataframe = pd.DataFrame()
     
     print(dataframe)
     
@@ -43,12 +39,12 @@ def ExtractData(commonPath, specificPaths : list[str]):
             
             data = ExtractPowerAndAngles(f, fullDataPath)
             
-            dataframe[f"{path}_Angle"] = data[0]
-            dataframe[f"{path}_Power"] = data[1]
+            dataframe[f"{f}_Angle"] = data[0]
+            dataframe[f"{f}_Power"] = data[1]
         
     print(dataframe)
     
-    dataframe.to_csv("Test.csv")
+    dataframe.to_csv(f"{commonPath}/Data.csv", index=False)
     
     #PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "MothEye")
     #PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "Regular")
