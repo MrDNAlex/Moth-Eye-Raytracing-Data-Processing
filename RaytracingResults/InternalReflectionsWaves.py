@@ -4,14 +4,6 @@ import matplotlib.pyplot as plt
 import json
 import pandas as pd
 
-def ExtractPowerAndRays(file, fullPath):
-    with open(os.path.join(fullPath, file), "r") as f:
-        data = json.load(f)
-        
-    Stats = data["Stats"]
-    
-    return [Stats["CapturedPower"], Stats["StartRays"], Stats["CapturedRays"]]
-
 def GetPowerFromFile(file, fullPath):
     
     with open(os.path.join(fullPath, file), "r") as f:
@@ -19,6 +11,15 @@ def GetPowerFromFile(file, fullPath):
         
     Stats = data["Stats"]
     return Stats["CapturedPower"] / Stats["StartRays"]
+
+# Use this Format for all Other Upcoming Data
+def ExtractPowerAndRays(file, fullPath):
+    with open(os.path.join(fullPath, file), "r") as f:
+        data = json.load(f)
+        
+    Stats = data["Stats"]
+    
+    return [Stats["CapturedPower"], Stats["StartRays"], Stats["CapturedRays"]]
 
 def ExtractData(commonPath, specificPaths : list[str]):
     cols = []
@@ -45,17 +46,10 @@ def ExtractData(commonPath, specificPaths : list[str]):
             data = ExtractPowerAndRays(f, fullDataPath)
             
             dataframe.loc[j, f"{path}_CapturedPower"] = data[0]
-            dataframe.loc[j, f"{path}_CapturedRays"] = data[1]
-            dataframe.loc[j, f"{path}_StartRays"] = data[2]
+            dataframe.loc[j, f"{path}_StartRays"] = data[1]
+            dataframe.loc[j, f"{path}_CapturedRays"] = data[2]
         
-    print(dataframe)
-    
-    dataframe.to_csv("Test.csv")
-    
-    #PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "MothEye")
-    #PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "Regular")
-
-
+    dataframe.to_csv(f"{commonPath}/Data.csv", index=False)
 
 def PlotInternalReflections(commonPath, specificPath):
     
