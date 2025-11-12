@@ -21,15 +21,11 @@ def ExtractData(commonPath, specificPaths : list[str]):
     
     dataframe = pd.DataFrame()
     
-    print(dataframe)
-    
     for i in range(len(specificPaths)):
         
         path = specificPaths[i]
         
         fullDataPath = os.path.join(commonPath, "Data", path)
-        
-        print(fullDataPath)
         
         files = [f for f in os.listdir(fullDataPath) if os.path.isfile(os.path.join(fullDataPath, f))]
         
@@ -39,15 +35,12 @@ def ExtractData(commonPath, specificPaths : list[str]):
             
             data = ExtractPowerAndAngles(f, fullDataPath)
             
-            dataframe[f"{f}_Angle"] = data[0]
-            dataframe[f"{f}_Power"] = data[1]
+            colName = f.removeprefix("MaxCaptureAngle").removesuffix(".json")
+            
+            dataframe[f"{colName}_Angle"] = data[0]
+            dataframe[f"{colName}_Power"] = data[1]
         
-    print(dataframe)
-    
     dataframe.to_csv(f"{commonPath}/Data.csv", index=False)
-    
-    #PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "MothEye")
-    #PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "Regular")
     
 def PlotMaxCaptureAngle(commonPath, specificPath):
     
