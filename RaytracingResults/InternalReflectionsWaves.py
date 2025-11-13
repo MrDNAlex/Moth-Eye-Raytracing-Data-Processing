@@ -49,7 +49,7 @@ def ExtractData(commonPath, specificPaths : list[str]):
             dataframe.loc[j, f"{path}_StartRays"] = data[1]
             dataframe.loc[j, f"{path}_CapturedRays"] = data[2]
         
-    dataframe.to_csv(f"{commonPath}/Data.csv", index=False)
+    dataframe.to_csv(f"{commonPath}/InternalReflectionsWaves.csv", index=False)
 
 def PlotInternalReflections(commonPath, specificPath):
     
@@ -65,6 +65,8 @@ def PlotInternalReflections(commonPath, specificPath):
     QDs = []
 
     plt.figure(figsize=(16, 10))
+    
+    cmap = plt.get_cmap('magma')
 
     for i in range(len(files)):
         
@@ -73,7 +75,7 @@ def PlotInternalReflections(commonPath, specificPath):
         power.append(GetPowerFromFile(file, fullDataPath)*100)
         QDs.append(i+1)
 
-    plt.plot(QDs, power)
+    plt.plot(QDs, power, color=cmap(0.5))
     plt.title(f"Solar Power Absorbed from QD Emission Unit Cell (From Source : {specificPath}) (Moth Eye Representation : Wave)")
     plt.xlabel("Number of Sources")
     plt.ylabel("Power (%)")
@@ -98,6 +100,9 @@ def PlotInternalReflectionsComparison(commonPath, specificPath1, specificPath2):
     QDs = []
 
     plt.figure(figsize=(16, 10))
+    
+    cmap = plt.get_cmap('magma')
+    colors = [cmap(i / 2) for i in range(2)]
 
     for i in range(len(files1)):
         
@@ -108,8 +113,8 @@ def PlotInternalReflectionsComparison(commonPath, specificPath1, specificPath2):
         power2.append(GetPowerFromFile(file2, fullDataPath2)*100)
         QDs.append(i+1)
 
-    plt.plot(QDs, power1, label=specificPath1)
-    plt.plot(QDs, power2, label=specificPath2)
+    plt.plot(QDs, power1, label=specificPath1, color=colors[0])
+    plt.plot(QDs, power2, label=specificPath2, color=colors[1])
     plt.title(f"Comparison of Solar Power Absorbed from QD Emission Unit Cell (Moth Eye Representation : Wave)")
     plt.xlabel("Number of Sources")
     plt.ylabel("Power (%)")
@@ -118,8 +123,7 @@ def PlotInternalReflectionsComparison(commonPath, specificPath1, specificPath2):
     plt.savefig(f"{fullPlotPath}/Comparison_Power_Absorbed_Wave.png")
     plt.close()
 
+#ExtractData("RaytracingResults/InternalReflectionsWaves", ["Cone", "QD"])
 #PlotInternalReflections("RaytracingResults/InternalReflectionsWaves", "Cone")
 #PlotInternalReflections("RaytracingResults/InternalReflectionsWaves", "QD")
 #PlotInternalReflectionsComparison("RaytracingResults/InternalReflectionsWaves", "QD", "Cone")
-
-ExtractData("RaytracingResults/InternalReflectionsWaves", ["Cone", "QD"])

@@ -48,7 +48,7 @@ def ExtractData(commonPath, specificPaths : list[str]):
                 
                 f = files[j]
                 
-                dataframe.loc[j, "Layers"] = f.split("Waveguide")[1].split("Large")[0].split("UnitCell")[0]
+                dataframe.loc[j, "Layers"] = f.split("Waveguide")[1].split("Angle")[0]
                 
                 data = ExtractPowerAndRays(f, os.path.join(fullDataPath, fol))
                 
@@ -56,18 +56,18 @@ def ExtractData(commonPath, specificPaths : list[str]):
                 dataframe.loc[j, f"{path}_{fol}_CapturedRays"] = data[1]
                 dataframe.loc[j, f"{path}_{fol}_StartRays"] = data[2]
         
-    dataframe.to_csv(f"{commonPath}/InternalReflectionsWaveguide.csv", index=False)
-    
-def PlotInternalReflections(commonPath, specificPath):
+    dataframe.to_csv(f"{commonPath}/RealLifeResultsWaveguide.csv", index=False)
+
+def PlotInternalReflections(commonPath, specificPath:str):
     
     fullPlotPath = os.path.join(commonPath, "Plots", specificPath)
         
     if not os.path.exists(fullPlotPath):
         os.mkdir(fullPlotPath)
     
-    dataframe = pd.read_csv(f"{commonPath}/InternalReflectionsWaveguide.csv")
+    dataframe = pd.read_csv(f"{commonPath}/RealLifeResultsWaveguide.csv")
     
-    QDNums = [f"QD{i}" for i in range(1, 16)]
+    QDNums = [f"QD{i}" for i in range(0, 450, 50)]
     
     plt.figure(figsize=(16, 10))
     
@@ -82,18 +82,14 @@ def PlotInternalReflections(commonPath, specificPath):
         
         plt.plot(dataframe["Layers"], powerPercent, label=qd, color=colors[i])
         
-    plt.title(f"Total Internal Reflection from QD Emission Unit Cell (From Source : {specificPath}) (Moth Eye Representation : Waveguide)")
+    plt.title(f"Absorbtion of Power in a Real Life Scenario (From Angle : {specificPath.removeprefix("Angle")}) (Moth Eye Representation : Waveguide)")
     plt.xlabel("Number of Layers")
     plt.ylabel("Absorbed Power (%)")
     plt.grid()
     plt.legend()
-    plt.savefig(f"{fullPlotPath}/Internal_Reflection_Power_Absorbed_{specificPath}_Waveguide.png")
+    plt.savefig(f"{fullPlotPath}/Real_Life_Power_Absorbed_{specificPath}_Waveguide.png")
     plt.close()
 
-#paths = ["Cone_Large_Regular", "Cone_Large_MothEye", "Cone_UnitCell_Regular", "Cone_UnitCell_MothEye", "QD_Large_Regular", "QD_Large_MothEye", "QD_UnitCell_Regular", "QD_UnitCell_MothEye"]
-#
-#ExtractData("RaytracingResults/InternalReflections", ["Cone_Large_Regular", "Cone_Large_MothEye", "Cone_UnitCell_Regular", "Cone_UnitCell_MothEye", "QD_Large_Regular", "QD_Large_MothEye", "QD_UnitCell_Regular", "QD_UnitCell_MothEye"])
-#
-#for path in paths:
-#    PlotInternalReflections("RaytracingResults/InternalReflections", path)
-    
+#ExtractData("RaytracingResults/RealLifeResults", ["Angle0", "Angle26"])
+#PlotInternalReflections("RaytracingResults/RealLifeResults", "Angle0")
+#PlotInternalReflections("RaytracingResults/RealLifeResults", "Angle26")

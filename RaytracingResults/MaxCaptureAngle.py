@@ -3,6 +3,7 @@ import re
 import matplotlib.pyplot as plt
 import json
 import pandas as pd
+import numpy as np
 
 def ExtractPowerAndAngles(file, fullPath):
     with open(os.path.join(fullPath, file), "r") as f:
@@ -33,7 +34,7 @@ def ExtractData(commonPath, specificPaths : list[str]):
             dataframe[f"{colName}_Angle"] = data[0]
             dataframe[f"{colName}_Power"] = data[1]
         
-    dataframe.to_csv(f"{commonPath}/Data.csv", index=False)
+    dataframe.to_csv(f"{commonPath}/MaxCaptureAngle.csv", index=False)
     
 def PlotMaxCaptureAngle(commonPath, specificPath):
     
@@ -50,12 +51,14 @@ def PlotMaxCaptureAngle(commonPath, specificPath):
         with open(os.path.join(fullDataPath, file), "r") as f:
                 data = json.load(f)
 
-        power = data["Power"]
-        angles = data["Angle"]
+        power = np.array(data["Power"]) * 100
+        angles = np.array(data["Angle"])
         
         plt.figure(figsize=(16, 10))
+        
+        cmap = plt.get_cmap('magma')
 
-        plt.plot(angles, power)
+        plt.plot(angles, power, color=cmap(0.5))
         plt.title(f"Power vs Angle for {file.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " ")} Linear Waveguide Layers")
         plt.xlabel("Angle (degrees)")
         plt.ylabel("Power (%)")
@@ -86,16 +89,18 @@ def PlotMaxCaptureAngleComparison(commonPath, specificPath1, specificPath2):
         with open(os.path.join(fullDataPath2, file2), "r") as f:
                 data2 = json.load(f)
 
-        power1 = data1["Power"] * 100
-        angles1 = data1["Angle"]
+        power1 = np.array(data1["Power"]) * 100
+        angles1 = np.array(data1["Angle"])
         
-        power2 = data2["Power"] * 100
-        angles2 = data2["Angle"]
+        power2 = np.array(data2["Power"]) * 100
+        angles2 = np.array(data2["Angle"])
         
         plt.figure(figsize=(16, 10))
+        
+        cmap = plt.get_cmap('magma')
 
-        plt.plot(angles1, power1, label=specificPath1)
-        plt.plot(angles2, power2, label=specificPath2)
+        plt.plot(angles1, power1, label=specificPath1, color=cmap(0))
+        plt.plot(angles2, power2, label=specificPath2, color=cmap(1))
         plt.title(f"Comparison of Power vs Angle for {file1.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " ")} Linear Waveguide Layers")
         plt.xlabel("Angle (degrees)")
         plt.ylabel("Power (%)")
@@ -131,13 +136,14 @@ def PlotMaxCaptureAngleFullComparison(commonPath, specificPath1, specificPath2):
     )
 
     plt.figure(figsize=(16, 10))
+    
+    cmap = plt.get_cmap('magma')
+    colors = [cmap(i / ((len(files1)))) for i in range(0, len(files1))]
 
     for i in range(0, len(files1), 4):
         
         file1 = files1[i]
         file2 = files2[i]
-        
-        print(file1)
         
         with open(os.path.join(fullDataPath1, file1), "r") as f:
                 data1 = json.load(f)
@@ -145,14 +151,14 @@ def PlotMaxCaptureAngleFullComparison(commonPath, specificPath1, specificPath2):
         with open(os.path.join(fullDataPath2, file2), "r") as f:
                 data2 = json.load(f)
 
-        power1 = data1["Power"] * 100
-        angles1 = data1["Angle"]
+        power1 = np.array(data1["Power"]) * 100
+        angles1 = np.array(data1["Angle"])
         
-        power2 = data2["Power"] * 100
-        angles2 = data2["Angle"]
+        power2 = np.array(data2["Power"]) * 100
+        angles2 = np.array(data2["Angle"])
         
-        plt.plot(angles1, power1, label=specificPath1 + file1.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " "))
-        plt.plot(angles2, power2, label=specificPath2 + file1.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " "))
+        plt.plot(angles1, power1, color=colors[i], label=specificPath1 + file1.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " "))
+        plt.plot(angles2, power2, color=colors[i], label=specificPath2 + file2.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " "))
         
     plt.title(f"Comparison of Power vs Angle for Linear Waveguide Layers")
     plt.xlabel("Angle (degrees)")
@@ -161,5 +167,9 @@ def PlotMaxCaptureAngleFullComparison(commonPath, specificPath1, specificPath2):
     plt.legend()
     plt.savefig(f"{fullPlotPath}/Full_Comparison_Power_vs_Angle_Waveguide_Layers.png")
     plt.close()
-
-ExtractData("RaytracingResults/MaxCaptureAngle", ["MothEye", "Regular"])
+    
+#ExtractData("RaytracingResults/MaxCaptureAngle", ["MothEye", "Regular"])
+#PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "MothEye")
+#PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "Regular")
+#PlotMaxCaptureAngleComparison("RaytracingResults/MaxCaptureAngle", "MothEye", "Regular")
+PlotMaxCaptureAngleFullComparison("RaytracingResults/MaxCaptureAngle", "MothEye", "Regular")
