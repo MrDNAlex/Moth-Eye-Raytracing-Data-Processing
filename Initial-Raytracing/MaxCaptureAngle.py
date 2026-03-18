@@ -59,11 +59,11 @@ def PlotMaxCaptureAngle(commonPath, specificPath):
         cmap = plt.get_cmap('magma')
 
         plt.plot(angles, power, color=cmap(0.5))
-        plt.title(f"Power vs Angle for {file.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " ")} Linear Waveguide Layers")
+        plt.title(f"Power vs Angle for {file.removeprefix('MaxCaptureAngleWaveguide').removesuffix('.json').replace('_', ' ')} Linear Waveguide Layers")
         plt.xlabel("Angle (degrees)")
         plt.ylabel("Power (%)")
         plt.grid()
-        plt.savefig(f"{fullPlotPath}/Power_vs_Angle_{file.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json")}_Waveguide_Layers.png")
+        plt.savefig(f"{fullPlotPath}/Power_vs_Angle_{file.removeprefix('MaxCaptureAngleWaveguide').removesuffix('.json')}_Waveguide_Layers.png")
         plt.close()
 
 def PlotMaxCaptureAngleComparison(commonPath, specificPath1, specificPath2):
@@ -101,12 +101,12 @@ def PlotMaxCaptureAngleComparison(commonPath, specificPath1, specificPath2):
 
         plt.plot(angles1, power1, label=specificPath1, color=cmap(0))
         plt.plot(angles2, power2, label=specificPath2, color=cmap(1))
-        plt.title(f"Comparison of Power vs Angle for {file1.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " ")} Linear Waveguide Layers")
+        plt.title(f"Comparison of Power vs Angle for {file1.removeprefix('MaxCaptureAngleWaveguide').removesuffix('.json').replace('_', ' ')} Linear Waveguide Layers")
         plt.xlabel("Angle (degrees)")
         plt.ylabel("Power (%)")
         plt.grid()
         plt.legend()
-        plt.savefig(f"{fullPlotPath}/Comparison_Power_vs_Angle_{file1.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json")}_Waveguide_Layers.png")
+        plt.savefig(f"{fullPlotPath}/Comparison_Power_vs_Angle_{file1.removeprefix('MaxCaptureAngleWaveguide').removesuffix('.json')}_Waveguide_Layers.png")
         plt.close()
         
 def PlotMaxCaptureAngleFullComparison(commonPath, specificPath1, specificPath2):
