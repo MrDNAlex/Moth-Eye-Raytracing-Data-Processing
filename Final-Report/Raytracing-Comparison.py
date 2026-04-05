@@ -155,7 +155,7 @@ def main():
         
         for ax in axes:
             ax.set_xlabel("Wavelength (nm)")
-            ax.grid(True, linestyle='--', alpha=0.6)
+            ax.grid(True, alpha=0.6)
             ax.margins(y=0.1) 
             
         plt.tight_layout()

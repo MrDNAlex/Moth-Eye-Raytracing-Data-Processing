@@ -91,11 +91,11 @@ plt.xlim(-0.6, 0.6)
 plt.ylim(0, 1.05)
 
 # Make dashed grid lines
-plt.grid(True, linestyle='--', alpha=0.6)
+plt.grid(True, alpha=0.6)
 plt.tight_layout()
 
 # Push the legend to the RIGHT SIDE so it stays completely out of the way
-plt.legend(loc='center left', bbox_to_anchor=(1.05, 0.5), ncol=1, fontsize='medium')
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), ncol=1, fontsize='medium')
 
 # Ensure the Plots directory exists before saving
 scriptDir = os.path.dirname(os.path.abspath(__file__))

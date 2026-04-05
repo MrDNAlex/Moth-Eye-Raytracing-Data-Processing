@@ -19,7 +19,6 @@ mpl.rcParams['axes.labelcolor'] = '#0E0A1F'
 mpl.rcParams['lines.color'] = '#0E0A1F'
 mpl.rcParams['xtick.color'] = '#0E0A1F'
 mpl.rcParams['ytick.color'] = '#0E0A1F'
-
 mpl.rcParams['lines.markersize'] = 10
 
 def get_test_label(filename):
@@ -84,9 +83,13 @@ def main():
         if structure_name not in structure_groups:
             structure_groups[structure_name] = []
         
-        file_info = {'filename': clean_name, 'label': display_label, 'data': df}
+        # Added 'structure' to the dictionary so I can sort by it later!
+        file_info = {'filename': clean_name, 'label': display_label, 'data': df, 'structure': structure_name}
         structure_groups[structure_name].append(file_info)
         all_data.append(file_info)
+
+    # Sort my all_data list first by structure, then by label to group them nicely in the legend
+    all_data = sorted(all_data, key=lambda x: (x['structure'], x['label']))
 
     print("\n--- Generating Individual Global Plots ---")
     
@@ -103,17 +106,17 @@ def main():
         for i, item in enumerate(all_data):
             df = item['data']
             if category in df.columns:
-                # Add the structure name to the test label so global plots are distinguishable 
-                # (e.g., "Test 1 - hillLikeRadius")
-                global_label = f"{item['label']} - {item['filename'].split('shape_')[1].split('_')[0]}" if 'shape_' in item['filename'] else item['label']
-                plt.plot(df['wavelength_nm'], df[category], "--", label=global_label, color=colors[i])
+                # Cleaner label formatting using the 'structure' key I added to file_info
+                global_label = f"{item['structure']} - {item['label']}"
+                # Multiplied data by 100 for percentage
+                plt.plot(df['wavelength_nm'], df[category] * 100, "--", label=global_label, color=colors[i])
                 
         plt.title(title)
         plt.xlabel("Wavelength (nm)")
         plt.ylabel(ylabel)
         
         plt.tight_layout()
-        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
+        plt.legend(bbox_to_anchor=(1, 0.5), loc='center left', fontsize='small')
         
         output_path = os.path.join(script_dir, "Plots", output_filename)
         plt.savefig(output_path, bbox_inches='tight')
@@ -124,9 +127,10 @@ def main():
     os.makedirs(os.path.join(script_dir, "Plots"), exist_ok=True)
 
     # 5. Create my individual global graphs for T, A, and R
-    create_global_plot('T', "Global Transmittance Comparison", "Transmittance", "Plot_1_Global_Transmittance.png")
-    create_global_plot('A', "Global Absorbance Comparison", "Absorbance", "Plot_2_Global_Absorbance.png")
-    create_global_plot('R', "Global Reflectance Comparison", "Reflectance", "Plot_3_Global_Reflectance.png")
+    # Updated text to include (%)
+    create_global_plot('T', "Global Transmittance Comparison", "Transmittance (%)", "Plot_1_Global_Transmittance.png")
+    create_global_plot('A', "Global Absorbance Comparison", "Absorbance (%)", "Plot_2_Global_Absorbance.png")
+    create_global_plot('R', "Global Reflectance Comparison", "Reflectance (%)", "Plot_3_Global_Reflectance.png")
 
     print("\n--- Generating Category-Specific Comparisons ---")
     
@@ -166,21 +170,21 @@ def main():
             lw = style["linewidth"]
             a = style["alpha"]
             
-            # Apply the styles and the dynamic color to the plots
-            if 'T' in df.columns: axes[0].plot(df['wavelength_nm'], df['T'], label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
-            if 'R' in df.columns: axes[1].plot(df['wavelength_nm'], df['R'], label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
-            if 'A' in df.columns: axes[2].plot(df['wavelength_nm'], df['A'], label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
+            # Apply the styles, dynamic color, and multiply data by 100
+            if 'T' in df.columns: axes[0].plot(df['wavelength_nm'], df['T'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
+            if 'R' in df.columns: axes[1].plot(df['wavelength_nm'], df['R'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
+            if 'A' in df.columns: axes[2].plot(df['wavelength_nm'], df['A'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
 
         axes[0].set_title("Transmittance (T)")
-        axes[0].set_ylabel("Transmittance")
+        axes[0].set_ylabel("Transmittance (%)")
         axes[1].set_title("Reflectance (R)")
-        axes[1].set_ylabel("Reflectance")
+        axes[1].set_ylabel("Reflectance (%)")
         axes[2].set_title("Absorbance (A)")
-        axes[2].set_ylabel("Absorbance")
+        axes[2].set_ylabel("Absorbance (%)")
         
         for ax in axes:
             ax.set_xlabel("Wavelength (nm)")
-            ax.grid(True, linestyle='--', alpha=0.6)
+            ax.grid(True, alpha=0.6)
             ax.margins(y=0.1)
             
         # Clean layout and add heavy spacing for text and legend
@@ -217,14 +221,15 @@ def main():
         
         for i, (structure, df) in enumerate(avg_curves.items()):
             if category in df.columns:
-                plt.plot(df['wavelength_nm'], df[category], label=structure, color=colors[i])
+                # Multiplied data by 100 for percentage
+                plt.plot(df['wavelength_nm'], df[category] * 100, label=structure, color=colors[i])
                 
         plt.title(title)
         plt.xlabel("Wavelength (nm)")
         plt.ylabel(ylabel)
         
         plt.tight_layout()
-        plt.legend(title="Structure Shape", bbox_to_anchor=(1.05, 1), loc='upper left', fontsize='small')
+        plt.legend(title="Structure Shape", bbox_to_anchor=(1, 0.5), loc='center left', fontsize='small')
         
         output_path = os.path.join(script_dir, "Plots", output_filename)
         plt.savefig(output_path, bbox_inches='tight')
@@ -232,9 +237,10 @@ def main():
         print(f"Saved Average Curve Plot: {output_path}")
 
     # 8. Plot my final average curves for T, A, and R
-    create_average_curve_plot('T', "Average Transmittance by Structure Type", "Average Transmittance", "Plot_4_Average_Transmittance.png")
-    create_average_curve_plot('A', "Average Absorbance by Structure Type", "Average Absorbance", "Plot_5_Average_Absorbance.png")
-    create_average_curve_plot('R', "Average Reflectance by Structure Type", "Average Reflectance", "Plot_6_Average_Reflectance.png")
+    # Updated text to include (%)
+    create_average_curve_plot('T', "Average Transmittance by Structure Type", "Average Transmittance (%)", "Plot_4_Average_Transmittance.png")
+    create_average_curve_plot('A', "Average Absorbance by Structure Type", "Average Absorbance (%)", "Plot_5_Average_Absorbance.png")
+    create_average_curve_plot('R', "Average Reflectance by Structure Type", "Average Reflectance (%)", "Plot_6_Average_Reflectance.png")
 
     print("\nAll of my analysis plots have been generated successfully!")
 
