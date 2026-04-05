@@ -1,9 +1,27 @@
 import os
 import re 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import json
 import pandas as pd
 import numpy as np
+
+plt.style.use('ggplot')
+mpl.rcParams['lines.linewidth'] = 4
+mpl.rcParams['figure.dpi'] = 300
+mpl.rcParams['font.size'] = 16  
+mpl.rcParams['figure.titlesize'] = 22 
+plt.rcParams['axes.titlepad'] = 20
+mpl.rcParams['font.weight'] = 'light'
+mpl.rcParams['figure.facecolor'] = 'white'
+mpl.rcParams['axes.facecolor'] = 'white'
+mpl.rcParams['axes.edgecolor'] = '#0E0A1F'
+mpl.rcParams['grid.color'] = '#0E0A1F'
+mpl.rcParams['axes.labelcolor'] = '#0E0A1F'
+mpl.rcParams['lines.color'] = '#0E0A1F'
+mpl.rcParams['xtick.color'] = '#0E0A1F'
+mpl.rcParams['ytick.color'] = '#0E0A1F'
+mpl.rcParams['lines.markersize'] = 10
 
 def ExtractPowerAndAngles(file, fullPath):
     with open(os.path.join(fullPath, file), "r") as f:
@@ -101,7 +119,7 @@ def PlotMaxCaptureAngleComparison(commonPath, specificPath1, specificPath2):
 
         plt.plot(angles1, power1, label=specificPath1, color=cmap(0))
         plt.plot(angles2, power2, label=specificPath2, color=cmap(1))
-        plt.title(f"Comparison of Power vs Angle for {file1.removeprefix('MaxCaptureAngleWaveguide').removesuffix('.json').replace('_', ' ')} Linear Waveguide Layers")
+        plt.title(f"Comparison of Captured Power vs Incident Angle for {file1.removeprefix('MaxCaptureAngleWaveguide').removesuffix('.json').replace('_', ' ')} Linear Waveguide Layers")
         plt.xlabel("Angle (degrees)")
         plt.ylabel("Power (%)")
         plt.grid()
@@ -157,19 +175,125 @@ def PlotMaxCaptureAngleFullComparison(commonPath, specificPath1, specificPath2):
         power2 = np.array(data2["Power"]) * 100
         angles2 = np.array(data2["Angle"])
         
-        plt.plot(angles1, power1, color=colors[i], label=specificPath1 + file1.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " "))
-        plt.plot(angles2, power2, color=colors[i], label=specificPath2 + file2.removeprefix("MaxCaptureAngleWaveguide").removesuffix(".json").replace("_", " "))
+        plt.plot(angles1, power1, color=colors[i], label="Approximated GRIN" + " (" + file1.removeprefix("MaxCaptureAngleWaveguide").split("_")[0] + " Layers)")
+        plt.plot(angles2, power2, color=colors[i], label="Linear GRIN" + " (" + file2.removeprefix("MaxCaptureAngleWaveguide").split("_")[0] + " Layers)")
         
-    plt.title(f"Comparison of Power vs Angle for Linear Waveguide Layers")
-    plt.xlabel("Angle (degrees)")
-    plt.ylabel("Power (%)")
-    plt.grid()
-    plt.legend()
+    plt.title(f"Transmitted Power at various Incident Angles for a\n Waveguide interpretation of a Moth Eye AR Layer")
+    plt.xlabel("Incident Angle (°)")
+    plt.ylabel("Transmitted Power (%)")
+    plt.grid(True, alpha=0.6)
+    
+    # --- Legend Grouping Logic ---
+    handles, labels = plt.gca().get_legend_handles_labels()
+    
+    approx_handles = [h for h, l in zip(handles, labels) if "Approximated" in l]
+    approx_labels = [l for h, l in zip(handles, labels) if "Approximated" in l]
+    
+    linear_handles = [h for h, l in zip(handles, labels) if "Linear" in l]
+    linear_labels = [l for h, l in zip(handles, labels) if "Linear" in l]
+    
+    sorted_handles = approx_handles + linear_handles
+    sorted_labels = approx_labels + linear_labels
+    
+    plt.legend(sorted_handles, sorted_labels, loc='center left', bbox_to_anchor=(1.02, 0.5))
+    
+    plt.tight_layout()
     plt.savefig(f"{fullPlotPath}/Full_Comparison_Power_vs_Angle_Waveguide_Layers.png")
     plt.close()
     
-#ExtractData("RaytracingResults/MaxCaptureAngle", ["MothEye", "Regular"])
-#PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "MothEye")
-#PlotMaxCaptureAngle("RaytracingResults/MaxCaptureAngle", "Regular")
-#PlotMaxCaptureAngleComparison("RaytracingResults/MaxCaptureAngle", "MothEye", "Regular")
-PlotMaxCaptureAngleFullComparison("RaytracingResults/MaxCaptureAngle", "MothEye", "Regular")
+def PlotMaxCaptureAngleFullComparisonLinear(commonPath, specificPath1, specificPath2):
+    
+    fullDataPath1 = os.path.join(commonPath, "Data", specificPath1)
+    fullDataPath2 = os.path.join(commonPath, "Data", specificPath1)
+    fullPlotPath = os.path.join(commonPath, "Plots", "FullComparison")
+    
+    if not os.path.exists(fullPlotPath):
+        os.mkdir(fullPlotPath)
+    
+    files2 = [f for f in os.listdir(fullDataPath1) if os.path.isfile(os.path.join(fullDataPath1, f))]
+
+    def extract_number(filename):
+        match = re.search(r"Waveguide(\d+)", filename)
+        return int(match.group(1)) if match else -1
+    
+    # Sort numerically by waveguide number
+    files2 = sorted(
+        [f for f in os.listdir(fullDataPath2) if f.endswith(".json")],
+        key=extract_number
+    )
+
+    plt.figure(figsize=(16, 10))
+    
+    cmap = plt.get_cmap('magma')
+    colors = [cmap(i / ((len(files2)))) for i in range(0, len(files2))]
+
+    for i in range(0, len(files2), 4):
+        file2 = files2[i]
+        
+        with open(os.path.join(fullDataPath2, file2), "r") as f:
+                data2 = json.load(f)
+
+        power2 = np.array(data2["Power"]) * 100
+        angles2 = np.array(data2["Angle"])
+        
+        plt.plot(angles2, power2, color=colors[i], label="Linear GRIN" + " (" + file2.removeprefix("MaxCaptureAngleWaveguide").split("_")[0] + " Layers)")
+        
+    plt.title(f"Transmitted Power at various Incident Angles for a\nWaveguide interpretation of a Moth Eye AR Layer")
+    plt.xlabel("Incident Angle (degrees)")
+    plt.ylabel("Transmitted Power (%)")
+    plt.grid(True, alpha=0.6)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
+    plt.savefig(f"{fullPlotPath}/Full_Comparison_Power_vs_Angle_Waveguide_Layers_Linear.png")
+    plt.close()
+
+def PlotMaxCaptureAngleFullComparisonApproximated(commonPath, specificPath1, specificPath2):
+    
+    fullDataPath1 = os.path.join(commonPath, "Data", specificPath1)
+    fullPlotPath = os.path.join(commonPath, "Plots", "FullComparison")
+    
+    if not os.path.exists(fullPlotPath):
+        os.mkdir(fullPlotPath)
+    
+    files1 = [f for f in os.listdir(fullDataPath1) if os.path.isfile(os.path.join(fullDataPath1, f))]
+
+    def extract_number(filename):
+        match = re.search(r"Waveguide(\d+)", filename)
+        return int(match.group(1)) if match else -1
+    
+    # Sort numerically by waveguide number
+    files1 = sorted(
+        [f for f in os.listdir(fullDataPath1) if f.endswith(".json")],
+        key=extract_number
+    )
+
+    plt.figure(figsize=(16, 10))
+    
+    cmap = plt.get_cmap('magma')
+    colors = [cmap(i / ((len(files1)))) for i in range(0, len(files1))]
+
+    for i in range(0, len(files1), 4):
+        
+        file1 = files1[i]
+        
+        with open(os.path.join(fullDataPath1, file1), "r") as f:
+                data1 = json.load(f)
+                
+        power1 = np.array(data1["Power"]) * 100
+        angles1 = np.array(data1["Angle"])
+        
+        plt.plot(angles1, power1, color=colors[i], label="Approximated GRIN" + " (" + file1.removeprefix("MaxCaptureAngleWaveguide").split("_")[0] + " Layers)")
+        
+    plt.title(f"Transmitted Power at various Incident Angles for a\nWaveguide interpretation of a Moth Eye AR Layer")
+    plt.xlabel("Incident Angle (degrees)")
+    plt.ylabel("Transmitted Power (%)")
+    plt.grid(True, alpha=0.6)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
+    plt.savefig(f"{fullPlotPath}/Full_Comparison_Power_vs_Angle_Waveguide_Layers_Approximated.png")
+    plt.close()
+
+#ExtractData("Initial-Raytracing/MaxCaptureAngle", ["MothEye", "Regular"])
+#PlotMaxCaptureAngleFullComparison("Initial-Raytracing/MaxCaptureAngle", "MothEye", "Regular")
+#PlotMaxCaptureAngleFullComparisonLinear("Initial-Raytracing/MaxCaptureAngle", "MothEye", "Regular")
+#PlotMaxCaptureAngleFullComparisonApproximated("Initial-Raytracing/MaxCaptureAngle", "MothEye", "Regular")

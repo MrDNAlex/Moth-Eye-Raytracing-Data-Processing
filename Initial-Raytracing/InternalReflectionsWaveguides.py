@@ -1,8 +1,26 @@
 import os
 import re 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import json
 import pandas as pd
+
+plt.style.use('ggplot')
+mpl.rcParams['lines.linewidth'] = 4
+mpl.rcParams['figure.dpi'] = 300
+mpl.rcParams['font.size'] = 16  
+mpl.rcParams['figure.titlesize'] = 22 
+plt.rcParams['axes.titlepad'] = 20
+mpl.rcParams['font.weight'] = 'light'
+mpl.rcParams['figure.facecolor'] = 'white'
+mpl.rcParams['axes.facecolor'] = 'white'
+mpl.rcParams['axes.edgecolor'] = '#0E0A1F'
+mpl.rcParams['grid.color'] = '#0E0A1F'
+mpl.rcParams['axes.labelcolor'] = '#0E0A1F'
+mpl.rcParams['lines.color'] = '#0E0A1F'
+mpl.rcParams['xtick.color'] = '#0E0A1F'
+mpl.rcParams['ytick.color'] = '#0E0A1F'
+mpl.rcParams['lines.markersize'] = 10
 
 def ExtractPowerAndRays(file, fullPath):
     with open(os.path.join(fullPath, file), "r") as f:
@@ -57,43 +75,60 @@ def ExtractData(commonPath, specificPaths : list[str]):
                 dataframe.loc[j, f"{path}_{fol}_StartRays"] = data[2]
         
     dataframe.to_csv(f"{commonPath}/InternalReflectionsWaveguide.csv", index=False)
-    
+
 def PlotInternalReflections(commonPath, specificPath):
-    
+
     fullPlotPath = os.path.join(commonPath, "Plots", specificPath)
-        
+
+    # Re-applied the makedirs fix to prevent crashes
     if not os.path.exists(fullPlotPath):
-        os.mkdir(fullPlotPath)
-    
+        os.makedirs(fullPlotPath, exist_ok=True)
+
     dataframe = pd.read_csv(f"{commonPath}/InternalReflectionsWaveguide.csv")
-    
-    QDNums = [f"QD{i}" for i in range(1, 16)]
-    
+
     plt.figure(figsize=(16, 10))
-    
+
     cmap = plt.get_cmap('magma')
-    colors = [cmap(i / len(QDNums)) for i in range(len(QDNums))]
-    
-    for i in range(len(QDNums)):
+    colors = [cmap(i / 15) for i in range(15)]
+
+    for i in range(1, 16):
+
+        # Use the original folder name for the dataframe lookup
+        folder_name = f"QD{i}"
         
-        qd = QDNums[i]
-        
-        powerPercent = dataframe[f"{specificPath}_{qd}_CapturedPower"] / dataframe[f"{specificPath}_{qd}_StartRays"] * 100
-        
-        plt.plot(dataframe["Layers"], powerPercent, label=qd, color=colors[i])
-        
-    plt.title(f"Total Internal Reflection from QD Emission Unit Cell (From Source : {specificPath}) (Moth Eye Representation : Waveguide)")
+        # Use the formatted name for the graph legend
+        display_label = f"{i} QDs"
+
+        powerPercent = dataframe[f"{specificPath}_{folder_name}_CapturedPower"] / dataframe[f"{specificPath}_{folder_name}_StartRays"] * 100
+
+        plt.plot(dataframe["Layers"], powerPercent, label=display_label, color=colors[i-1])
+
+    # The title now pulls the combined name and simplified definition directly from the dictionary below
+    plt.title(f"TIR Power Absorbed from QD Emission using a {paths[specificPath]}")
     plt.xlabel("Number of Layers")
     plt.ylabel("Absorbed Power (%)")
-    plt.grid()
-    plt.legend()
+    plt.grid(True, alpha=0.6)
+    
+    # Centered outside legend
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
+    
     plt.savefig(f"{fullPlotPath}/Internal_Reflection_Power_Absorbed_{specificPath}_Waveguide.png")
     plt.close()
 
-#paths = ["Cone_Large_Regular", "Cone_Large_MothEye", "Cone_UnitCell_Regular", "Cone_UnitCell_MothEye", "QD_Large_Regular", "QD_Large_MothEye", "QD_UnitCell_Regular", "QD_UnitCell_MothEye"]
-#
-#ExtractData("RaytracingResults/InternalReflections", ["Cone_Large_Regular", "Cone_Large_MothEye", "Cone_UnitCell_Regular", "Cone_UnitCell_MothEye", "QD_Large_Regular", "QD_Large_MothEye", "QD_UnitCell_Regular", "QD_UnitCell_MothEye"])
-#
-#for path in paths:
-#    PlotInternalReflections("RaytracingResults/InternalReflections", path)
-    
+# The simplified definitions are now baked right into the titles with a newline character (\n)
+paths = {
+    "Cone_Large_Regular" : "Cone QD and Linear GRIN\n(Isolated Device-Scale Structure)",
+    "Cone_Large_MothEye": "Cone QD and Approximated GRIN\n(Isolated Device-Scale Structure)",
+    "Cone_UnitCell_Regular": "Cone QD and Linear GRIN\n(Single Repeating Unit Cell)",
+    "Cone_UnitCell_MothEye": "Cone QD and Approximated GRIN\n(Single Repeating Unit Cell)",
+    "QD_Large_Regular" : "Circular QD and Linear GRIN\n(Isolated Device-Scale Structure)",
+    "QD_Large_MothEye": "Circular QD and Approximated GRIN\n(Isolated Device-Scale Structure)",
+    "QD_UnitCell_Regular": "Circular QD and Linear GRIN\n(Single Repeating Unit Cell)",
+    "QD_UnitCell_MothEye": "Circular QD and Approximated GRIN\n(Single Repeating Unit Cell)",
+}
+
+#ExtractData("Initial-Raytracing/InternalReflections", list(paths.keys()))
+
+#for path in paths.keys():
+#    PlotInternalReflections("Initial-Raytracing/InternalReflections", path)

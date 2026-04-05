@@ -1,8 +1,26 @@
 import os
 import re 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import json
 import pandas as pd
+
+plt.style.use('ggplot')
+mpl.rcParams['lines.linewidth'] = 4
+mpl.rcParams['figure.dpi'] = 300
+mpl.rcParams['font.size'] = 16  
+mpl.rcParams['figure.titlesize'] = 22 
+plt.rcParams['axes.titlepad'] = 20
+mpl.rcParams['font.weight'] = 'light'
+mpl.rcParams['figure.facecolor'] = 'white'
+mpl.rcParams['axes.facecolor'] = 'white'
+mpl.rcParams['axes.edgecolor'] = '#0E0A1F'
+mpl.rcParams['grid.color'] = '#0E0A1F'
+mpl.rcParams['axes.labelcolor'] = '#0E0A1F'
+mpl.rcParams['lines.color'] = '#0E0A1F'
+mpl.rcParams['xtick.color'] = '#0E0A1F'
+mpl.rcParams['ytick.color'] = '#0E0A1F'
+mpl.rcParams['lines.markersize'] = 10
 
 def GetPowerFromFile(file, fullPath):
     
@@ -79,7 +97,7 @@ def PlotInternalReflections(commonPath, specificPath):
     plt.title(f"Solar Power Absorbed from QD Emission Unit Cell (From Source : {specificPath}) (Moth Eye Representation : Wave)")
     plt.xlabel("Number of Sources")
     plt.ylabel("Power (%)")
-    plt.grid()
+    plt.grid(True, alpha=0.6)
     plt.savefig(f"{fullPlotPath}/Power_Absorbed_{specificPath}_Wave.png")
     plt.close()
     
@@ -115,15 +133,16 @@ def PlotInternalReflectionsComparison(commonPath, specificPath1, specificPath2):
 
     plt.plot(QDs, power1, label=specificPath1, color=colors[0])
     plt.plot(QDs, power2, label=specificPath2, color=colors[1])
-    plt.title(f"Comparison of Solar Power Absorbed from QD Emission Unit Cell (Moth Eye Representation : Wave)")
+    plt.title(f"TIR Power Absorbed from QD Emission using Moth Eye Sinusoidal Geometric Representation")
     plt.xlabel("Number of Sources")
-    plt.ylabel("Power (%)")
-    plt.grid()
-    plt.legend()
+    plt.ylabel("Reflected Power (%)")
+    plt.grid(True, alpha=0.6)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
     plt.savefig(f"{fullPlotPath}/Comparison_Power_Absorbed_Wave.png")
     plt.close()
 
-#ExtractData("RaytracingResults/InternalReflectionsWaves", ["Cone", "QD"])
+#ExtractData("Initial-Raytracing/InternalReflectionsWaves", ["Cone", "QD"])
 #PlotInternalReflections("RaytracingResults/InternalReflectionsWaves", "Cone")
 #PlotInternalReflections("RaytracingResults/InternalReflectionsWaves", "QD")
-#PlotInternalReflectionsComparison("RaytracingResults/InternalReflectionsWaves", "QD", "Cone")
+#PlotInternalReflectionsComparison("Initial-Raytracing/InternalReflectionsWaves", "QD", "Cone")

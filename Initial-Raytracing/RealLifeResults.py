@@ -1,8 +1,26 @@
 import os
 import re 
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import json
 import pandas as pd
+
+plt.style.use('ggplot')
+mpl.rcParams['lines.linewidth'] = 4
+mpl.rcParams['figure.dpi'] = 300
+mpl.rcParams['font.size'] = 16  
+mpl.rcParams['figure.titlesize'] = 22 
+plt.rcParams['axes.titlepad'] = 20
+mpl.rcParams['font.weight'] = 'light'
+mpl.rcParams['figure.facecolor'] = 'white'
+mpl.rcParams['axes.facecolor'] = 'white'
+mpl.rcParams['axes.edgecolor'] = '#0E0A1F'
+mpl.rcParams['grid.color'] = '#0E0A1F'
+mpl.rcParams['axes.labelcolor'] = '#0E0A1F'
+mpl.rcParams['lines.color'] = '#0E0A1F'
+mpl.rcParams['xtick.color'] = '#0E0A1F'
+mpl.rcParams['ytick.color'] = '#0E0A1F'
+mpl.rcParams['lines.markersize'] = 10
 
 def ExtractPowerAndRays(file, fullPath):
     with open(os.path.join(fullPath, file), "r") as f:
@@ -80,16 +98,17 @@ def PlotInternalReflections(commonPath, specificPath:str):
         
         powerPercent = dataframe[f"{specificPath}_{qd}_CapturedPower"] / dataframe[f"{specificPath}_{qd}_StartRays"] * 100
         
-        plt.plot(dataframe["Layers"], powerPercent, label=qd, color=colors[i])
+        plt.plot(dataframe["Layers"], powerPercent, label=f"{qd.replace('QD', '')} QDs", color=colors[i])
         
-    plt.title(f"Absorbtion of Power in a Real Life Scenario (From Angle : {specificPath.removeprefix("Angle")}) (Moth Eye Representation : Waveguide)")
+    plt.title(f"Transmitted Power in a Real Life Scenario from a {specificPath.removeprefix('Angle')}° Incident Angle")
     plt.xlabel("Number of Layers")
     plt.ylabel("Absorbed Power (%)")
-    plt.grid()
-    plt.legend()
+    plt.grid(True, alpha=0.6)
+    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    plt.tight_layout()
     plt.savefig(f"{fullPlotPath}/Real_Life_Power_Absorbed_{specificPath}_Waveguide.png")
     plt.close()
 
-#ExtractData("RaytracingResults/RealLifeResults", ["Angle0", "Angle26"])
-#PlotInternalReflections("RaytracingResults/RealLifeResults", "Angle0")
-#PlotInternalReflections("RaytracingResults/RealLifeResults", "Angle26")
+#ExtractData("Initial-Raytracing/RealLifeResults", ["Angle0", "Angle26"])
+#PlotInternalReflections("Initial-Raytracing/RealLifeResults", "Angle0")
+#PlotInternalReflections("Initial-Raytracing/RealLifeResults", "Angle26")
