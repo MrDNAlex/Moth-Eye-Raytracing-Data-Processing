@@ -22,27 +22,27 @@ mpl.rcParams['xtick.color'] = '#0E0A1F'
 mpl.rcParams['ytick.color'] = '#0E0A1F'
 mpl.rcParams['lines.markersize'] = 10
 
-def get_test_info(filename):
-    # 1. Grab every single number found in the filename
+def GetTestInfo(filename):
+    # Grab every single number found in the filename
     numbers = re.findall(r'\d+', filename)
     
-    # 2. The first number is ALWAYS the angle, default to 0 if none found
+    # The first number is ALWAYS the angle, default to 0 if none found
     angle = int(numbers[0]) if numbers else 0
     label = f"Angle {angle}°"
     
-    # 3. Try to gracefully extract the category (e.g., Regular) if the format matches
+    # Try to gracefully extract the category (e.g., Regular) if the format matches
     match = re.search(r'_Layers_\d+_(.+)\.csv', filename)
     category = match.group(1) if match else "Custom_Category"
         
     return category, label, angle
 
-def get_sim_title(sim_folder):
-    # Extract the simulation number directly from the folder string (e.g., "Sim4" -> 4)
-    match = re.search(r'\d+', sim_folder)
+def GetSimTitle(simFolder):
+    # Extract the simulation number directly from the folder string
+    match = re.search(r'\d+', simFolder)
     if not match:
-        return sim_folder, None
+        return simFolder, None
         
-    sim_num = int(match.group())
+    simNum = int(match.group())
     
     # Clean, grammatically correct titles mapped to the simulation number
     titles = {
@@ -55,83 +55,84 @@ def get_sim_title(sim_folder):
         7: "Single PDMS Layer Optical Properties"
     }
     
-    return titles.get(sim_num, sim_folder), sim_num
+    return titles.get(simNum, simFolder), simNum
 
-def main():
-    # Get the exact directory where my script is saved
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+def ExtractAndPlotData():
+    # Get the exact directory where the script is saved
+    scriptDir = os.path.dirname(os.path.abspath(__file__))
     
-    # Navigate up two levels to the root of my FYDP-SunDOG repository, then into the Data folder
-    folder_path = os.path.abspath(os.path.join(script_dir, "Data", "Raytracing-Solcore"))
+    # Navigate up two levels to the root repository, then into the Data folder
+    folderPath = os.path.abspath(os.path.join(scriptDir, "Data", "Raytracing-Solcore"))
     
-    # Create the search pattern for my CSV files to look INSIDE subfolders
-    file_pattern = os.path.join(folder_path, "**", "*.csv")
-    all_files = glob.glob(file_pattern, recursive=True)
+    # Create the search pattern for CSV files to look INSIDE subfolders
+    filePattern = os.path.join(folderPath, "**", "*.csv")
+    allFiles = glob.glob(filePattern, recursive=True)
     
-    if not all_files:
-        print(f"I couldn't find any CSV files in {folder_path} or its subfolders.")
+    if not allFiles:
+        print(f"Couldn't find any CSV files in {folderPath} or its subfolders.")
         return
 
-    structure_groups = {}
+    structureGroups = {}
     
-    print(f"--- Analyzing my {len(all_files)} files in {folder_path} ---")
+    print(f"--- Analyzing {len(allFiles)} files in {folderPath} ---")
     
-    # Loop through my files and group them by BOTH their simulation folder and category
-    for file in all_files:
+    # Loop through files and group them by BOTH their simulation folder and category
+    for file in allFiles:
         df = pd.read_csv(file)
         filename = os.path.basename(file)
         
-        sim_folder = os.path.basename(os.path.dirname(file))
-        category, label, sort_key = get_test_info(filename)
-        print(f"Loaded: '{filename}'\n   -> Folder: '{sim_folder}', Category: '{category}', Label: '{label}'")
+        simFolder = os.path.basename(os.path.dirname(file))
+        category, label, sortKey = GetTestInfo(filename)
+        print(f"Loaded: '{filename}'\n   -> Folder: '{simFolder}', Category: '{category}', Label: '{label}'")
         
-        group_key = f"{sim_folder}_{category}"
+        groupKey = f"{simFolder}_{category}"
         
-        if group_key not in structure_groups:
-            structure_groups[group_key] = {
-                'sim_folder': sim_folder,
+        if groupKey not in structureGroups:
+            structureGroups[groupKey] = {
+                'simFolder': simFolder,
                 'category': category,
                 'items': []
             }
             
-        structure_groups[group_key]['items'].append({
+        structureGroups[groupKey]['items'].append({
             'filename': filename, 
             'label': label, 
-            'sort_key': sort_key,
+            'sortKey': sortKey,
             'data': df
         })
 
     print("\n--- Generating Folder-Specific Comparisons ---")
     
-    output_dir = os.path.join(script_dir, "Plots")
-    os.makedirs(output_dir, exist_ok=True)
+    outputDir = os.path.join(scriptDir, "Plots")
+    os.makedirs(outputDir, exist_ok=True)
     
     # Create subplots comparing files strictly within their own folder and category
-    for group_key, group_data in structure_groups.items():
-        sim_folder = group_data['sim_folder']
-        category = group_data['category']
+    for groupKey, groupData in structureGroups.items():
+        simFolder = groupData['simFolder']
+        category = groupData['category']
         
-        items = sorted(group_data['items'], key=lambda x: x['sort_key'])
-        num_items = len(items)
+        items = sorted(groupData['items'], key=lambda x: x['sortKey'])
+        numItems = len(items)
         
         fig, axes = plt.subplots(1, 3, figsize=(24, 7))
         
         # Grab the clean title and simulation number based on the folder string
-        base_title, sim_num = get_sim_title(sim_folder)
+        baseTitle, simNum = GetSimTitle(simFolder)
         
         # Replace the category suffix with "Simulation X"
-        if sim_num is not None:
-            display_title = f"{base_title} - Simulation {sim_num}"
+        if simNum is not None:
+            displayTitle = f"{baseTitle} - Simulation {simNum}"
         else:
-            display_title = f"{base_title} - {sim_folder}"
+            displayTitle = f"{baseTitle} - {simFolder}"
             
-        fig.suptitle(display_title, fontsize=22, weight='bold', y=0.98)
+        fig.suptitle(displayTitle, fontsize=22, weight='bold', y=0.98)
         
         # Extract magma colormap and generate a color for each item
         cmap = plt.get_cmap('magma')
-        # We sample from 0.1 to 0.85 to avoid pure black or pure white/yellow on the white background
+        
+        # Sample from 0.1 to 0.85 to avoid pure black or pure white/yellow on the white background
         start, stop = 0.1, 0.85
-        colors = [cmap(start + (stop - start) * i / max(1, num_items - 1)) for i in range(num_items)]
+        colors = [cmap(start + (stop - start) * i / max(1, numItems - 1)) for i in range(numItems)]
         
         for i, item in enumerate(items):
             df = item['data']
@@ -145,7 +146,7 @@ def main():
             if 'Absorbance' in df.columns: 
                 axes[2].plot(df['Wavelength'], df['Absorbance'] * 100, label=label, color=c)
 
-        # Style my axes
+        # Style axes
         axes[0].set_title("Transmittance (T)")
         axes[0].set_ylabel("Transmittance (%)")
         axes[1].set_title("Reflectance (R)")
@@ -162,17 +163,18 @@ def main():
         
         fig.subplots_adjust(top=0.80, bottom=0.25, wspace=0.35)
         
-        num_cols = min(len(items), 5) 
+        numCols = min(len(items), 5) 
         
         handles, labels = axes[0].get_legend_handles_labels()
-        fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.02), ncol=num_cols, fontsize='medium')
+        fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.02), ncol=numCols, fontsize='medium')
         
-        output_path = os.path.join(output_dir, f"Plot_{sim_folder}_{category}.png")
-        plt.savefig(output_path, bbox_inches='tight')
+        outputPath = os.path.join(outputDir, f"Plot_{simFolder}_{category}.png")
+        plt.savefig(outputPath, bbox_inches='tight')
         plt.close()
-        print(f"Saved Folder-Specific Plot: {output_path}")
+        
+        print(f"Saved Folder-Specific Plot: {outputPath}")
 
-    print("\nAll of my analysis plots have been generated successfully!")
+    print("\nFinished Generating Analysis Plots")
 
 if __name__ == "__main__":
-    main()
+    ExtractAndPlotData()

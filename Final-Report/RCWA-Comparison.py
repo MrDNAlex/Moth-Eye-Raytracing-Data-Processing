@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 plt.style.use('ggplot')
 mpl.rcParams['lines.linewidth'] = 4
 mpl.rcParams['figure.dpi'] = 300
-mpl.rcParams['font.size'] = 16  # Reduced slightly from 18
-mpl.rcParams['figure.titlesize'] = 22 # Reduced slightly from 25
+mpl.rcParams['font.size'] = 16  
+mpl.rcParams['figure.titlesize'] = 22 
 plt.rcParams['axes.titlepad'] = 20
 mpl.rcParams['font.weight'] = 'light'
 mpl.rcParams['figure.facecolor'] = 'white'
@@ -21,8 +21,7 @@ mpl.rcParams['xtick.color'] = '#0E0A1F'
 mpl.rcParams['ytick.color'] = '#0E0A1F'
 mpl.rcParams['lines.markersize'] = 10
 
-def get_test_label(filename):
-    # Map the filename parameters to the corresponding Test based on the Julia scripts
+def GetTestLabel(filename):
     if "N_3" in filename and "angle_0.0" in filename and "nlayers_200" in filename and "t_1" in filename:
         return "Test 1"
     elif "N_3" in filename and "angle_45.0" in filename and "nlayers_200" in filename and "t_1" in filename:
@@ -36,80 +35,71 @@ def get_test_label(filename):
     else:
         return "Custom Test"
 
-def main():
-    # 1. Get the exact directory where my script is saved
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+def ExtractAndPlotData():
+    scriptDir = os.path.dirname(os.path.abspath(__file__))
+    folderPath = os.path.join(scriptDir, "Data", "RCWA-1")
+    filePattern = os.path.join(folderPath, "*.csv")
+    allFiles = glob.glob(filePattern)
     
-    # 2. Define the folder path relative to my script's location
-    folder_path = os.path.join(script_dir, "Data", "RCWA-1")
-    
-    # 3. Create the search pattern for my CSV files
-    file_pattern = os.path.join(folder_path, "*.csv")
-    all_files = glob.glob(file_pattern)
-    
-    if not all_files:
-        print(f"I couldn't find any CSV files in {folder_path}.")
+    if not allFiles:
+        print(f"Couldn't find any CSV files in {folderPath}.")
         return
 
-    structure_groups = {}
-    all_data = []
+    structureGroups = {}
+    allData = []
 
-    print(f"--- Analyzing my {len(all_files)} files in {folder_path} ---")
+    print(f"--- Analyzing {len(allFiles)} files in {folderPath} ---")
     
-    # 4. Loop through my files and check for missing data categories
-    for file in all_files:
+    for file in allFiles:
         df = pd.read_csv(file)
         filename = os.path.basename(file)
-        clean_name = filename.replace('.csv', '')
+        cleanName = filename.replace('.csv', '')
         
-        # Use my new mapping function to grab the right test name
-        display_label = get_test_label(filename)
+        displayLabel = GetTestLabel(filename)
             
-        print(f"Loaded: '{filename}'\n   -> Mapped to Label: '{display_label}'")
+        print(f"Loaded: '{filename}'\n   -> Mapped to Label: '{displayLabel}'")
             
-        missing_categories = [cat for cat in ['R', 'T', 'A'] if cat not in df.columns or df[cat].isnull().all()]
-        if missing_categories:
-            print(f"   -> WARNING: Missing categories: {missing_categories}")
+        missingCategories = [cat for cat in ['R', 'T', 'A'] if cat not in df.columns or df[cat].isnull().all()]
+        if missingCategories:
+            print(f"   -> WARNING: Missing categories: {missingCategories}")
             
-        # Extract the structure shape name from my filename formatting safely
         try:
             if 'shape_' in filename:
-                structure_name = filename.split('shape_')[1].split('_')[0]
+                structureName = filename.split('shape_')[1].split('_')[0]
             else:
-                structure_name = "Custom_Shape"
+                structureName = "Custom_Shape"
         except IndexError:
-            structure_name = "Unknown_Structure"
+            structureName = "Unknown_Structure"
             
-        if structure_name not in structure_groups:
-            structure_groups[structure_name] = []
+        if structureName not in structureGroups:
+            structureGroups[structureName] = []
         
-        # Added 'structure' to the dictionary so I can sort by it later!
-        file_info = {'filename': clean_name, 'label': display_label, 'data': df, 'structure': structure_name}
-        structure_groups[structure_name].append(file_info)
-        all_data.append(file_info)
+        fileInfo = {
+            'filename': cleanName, 
+            'label': displayLabel, 
+            'data': df, 
+            'structure': structureName
+        }
+        structureGroups[structureName].append(fileInfo)
+        allData.append(fileInfo)
 
-    # Sort my all_data list first by structure, then by label to group them nicely in the legend
-    all_data = sorted(all_data, key=lambda x: (x['structure'], x['label']))
+    allData = sorted(allData, key=lambda x: (x['structure'], x['label']))
 
     print("\n--- Generating Individual Global Plots ---")
     
-    def create_global_plot(category, title, ylabel, output_filename):
-        # Increased size for global plots
+    def CreateGlobalPlot(category, title, ylabel, outputFilename):
         plt.figure(figsize=(12, 7))
         
-        # Generate magma colors based on the total number of items
-        num_items = len(all_data)
+        numItems = len(allData)
         cmap = plt.get_cmap('magma')
         start, stop = 0.1, 0.85
-        colors = [cmap(start + (stop - start) * i / max(1, num_items - 1)) for i in range(num_items)]
+        colors = [cmap(start + (stop - start) * i / max(1, numItems - 1)) for i in range(numItems)]
         
-        for i, item in enumerate(all_data):
+        for i, item in enumerate(allData):
             df = item['data']
             if category in df.columns:
-                # Cleaner label formatting using the 'structure' key I added to file_info
-                global_label = f"{item['structure']} - {item['label']}"
-                # Multiplied data by 100 for percentage
-                plt.plot(df['wavelength_nm'], df[category] * 100, "--", label=global_label, color=colors[i])
+                globalLabel = f"{item['structure']} - {item['label']}"
+                plt.plot(df['wavelength_nm'], df[category] * 100, "--", label=globalLabel, color=colors[i])
                 
         plt.title(title)
         plt.xlabel("Wavelength (nm)")
@@ -118,24 +108,20 @@ def main():
         plt.tight_layout()
         plt.legend(bbox_to_anchor=(1, 0.5), loc='center left', fontsize='small')
         
-        output_path = os.path.join(script_dir, "Plots", output_filename)
-        plt.savefig(output_path, bbox_inches='tight')
+        outputPath = os.path.join(scriptDir, "Plots", outputFilename)
+        plt.savefig(outputPath, bbox_inches='tight')
         plt.close()
-        print(f"Saved Global Plot: {output_path}")
+        print(f"Saved Global Plot: {outputPath}")
 
-    # Ensure Plots directory exists
-    os.makedirs(os.path.join(script_dir, "Plots"), exist_ok=True)
+    os.makedirs(os.path.join(scriptDir, "Plots"), exist_ok=True)
 
-    # 5. Create my individual global graphs for T, A, and R
-    # Updated text to include (%)
-    create_global_plot('T', "Global Transmittance Comparison", "Transmittance (%)", "Plot_1_Global_Transmittance.png")
-    create_global_plot('A', "Global Absorbance Comparison", "Absorbance (%)", "Plot_2_Global_Absorbance.png")
-    create_global_plot('R', "Global Reflectance Comparison", "Reflectance (%)", "Plot_3_Global_Reflectance.png")
+    CreateGlobalPlot('T', "Global Transmittance Comparison", "Transmittance (%)", "Plot_1_Global_Transmittance.png")
+    CreateGlobalPlot('A', "Global Absorbance Comparison", "Absorbance (%)", "Plot_2_Global_Absorbance.png")
+    CreateGlobalPlot('R', "Global Reflectance Comparison", "Reflectance (%)", "Plot_3_Global_Reflectance.png")
 
     print("\n--- Generating Category-Specific Comparisons ---")
     
-    # Define a cleaner style map
-    test_styles = {
+    testStyles = {
         "Test 1": {"linestyle": "-", "linewidth": 4, "alpha": 0.4},
         "Test 2": {"linestyle": "--", "linewidth": 2, "alpha": 1.0},
         "Test 3": {"linestyle": ":", "linewidth": 2.5, "alpha": 1.0},
@@ -144,36 +130,33 @@ def main():
         "Custom Test": {"linestyle": "-", "linewidth": 2, "alpha": 0.8}
     }
     
-    # 6. Create subplots comparing files strictly within their own category
-    for structure, items in structure_groups.items():
-        # Sort items so Test 1 appears before Test 2, etc. in the legend
+    for structure, items in structureGroups.items():
         items = sorted(items, key=lambda x: x['label'])
         
-        # Widened figure size to 24x8
         fig, axes = plt.subplots(1, 3, figsize=(24, 8))
         fig.suptitle(f"Comparison within Category: {structure}", fontsize=22, weight='bold', y=0.98)
         
-        # Generate magma colors for this specific category
-        num_items = len(items)
+        numItems = len(items)
         cmap = plt.get_cmap('magma')
         start, stop = 0.1, 0.85
-        colors = [cmap(start + (stop - start) * i / max(1, num_items - 1)) for i in range(num_items)]
+        colors = [cmap(start + (stop - start) * i / max(1, numItems - 1)) for i in range(numItems)]
         
         for i, item in enumerate(items):
             df = item['data']
             label = item['label']
             c = colors[i]
             
-            # Fetch the specific style for this test, fallback to a default if not found
-            style = test_styles.get(label, test_styles["Custom Test"])
+            style = testStyles.get(label, testStyles["Custom Test"])
             ls = style["linestyle"]
             lw = style["linewidth"]
             a = style["alpha"]
             
-            # Apply the styles, dynamic color, and multiply data by 100
-            if 'T' in df.columns: axes[0].plot(df['wavelength_nm'], df['T'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
-            if 'R' in df.columns: axes[1].plot(df['wavelength_nm'], df['R'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
-            if 'A' in df.columns: axes[2].plot(df['wavelength_nm'], df['A'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
+            if 'T' in df.columns: 
+                axes[0].plot(df['wavelength_nm'], df['T'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
+            if 'R' in df.columns: 
+                axes[1].plot(df['wavelength_nm'], df['R'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
+            if 'A' in df.columns: 
+                axes[2].plot(df['wavelength_nm'], df['A'] * 100, label=label, linestyle=ls, linewidth=lw, alpha=a, color=c)
 
         axes[0].set_title("Transmittance (T)")
         axes[0].set_ylabel("Transmittance (%)")
@@ -187,41 +170,35 @@ def main():
             ax.grid(True, alpha=0.6)
             ax.margins(y=0.1)
             
-        # Clean layout and add heavy spacing for text and legend
         plt.tight_layout()
         fig.subplots_adjust(top=0.85, bottom=0.25, wspace=0.35)
         
         handles, labels = axes[0].get_legend_handles_labels()
         fig.legend(handles, labels, loc='lower center', bbox_to_anchor=(0.5, 0.02), ncol=len(items), fontsize='medium')
         
-        output_path = os.path.join(script_dir, "Plots", f"Plot_Category_{structure}.png")
-        plt.savefig(output_path, bbox_inches='tight')
+        outputPath = os.path.join(scriptDir, "Plots", f"Plot_Category_{structure}.png")
+        plt.savefig(outputPath, bbox_inches='tight')
         plt.close()
-        print(f"Saved Category Plot: {output_path}")
+        print(f"Saved Category Plot: {outputPath}")
 
-    print("\n--- Generating Average Structure Comparison ---")
     print("\n--- Generating Average Curve Comparisons ---")
     
-    # 7. Calculate my average curves for each structure
-    avg_curves = {}
-    for structure, items in structure_groups.items():
-        combined_df = pd.concat([item['data'] for item in items], ignore_index=True)
-        avg_curve = combined_df.groupby('wavelength_nm').mean().reset_index()
-        avg_curves[structure] = avg_curve
+    avgCurves = {}
+    for structure, items in structureGroups.items():
+        combinedDf = pd.concat([item['data'] for item in items], ignore_index=True)
+        avgCurve = combinedDf.groupby('wavelength_nm').mean().reset_index()
+        avgCurves[structure] = avgCurve
 
-    # Helper function to plot my average comparison curves
-    def create_average_curve_plot(category, title, ylabel, output_filename):
+    def CreateAverageCurvePlot(category, title, ylabel, outputFilename):
         plt.figure(figsize=(12, 7))
         
-        # Generate magma colors based on the number of structures being compared
-        num_items = len(avg_curves)
+        numItems = len(avgCurves)
         cmap = plt.get_cmap('magma')
         start, stop = 0.1, 0.85
-        colors = [cmap(start + (stop - start) * i / max(1, num_items - 1)) for i in range(num_items)]
+        colors = [cmap(start + (stop - start) * i / max(1, numItems - 1)) for i in range(numItems)]
         
-        for i, (structure, df) in enumerate(avg_curves.items()):
+        for i, (structure, df) in enumerate(avgCurves.items()):
             if category in df.columns:
-                # Multiplied data by 100 for percentage
                 plt.plot(df['wavelength_nm'], df[category] * 100, label=structure, color=colors[i])
                 
         plt.title(title)
@@ -231,18 +208,16 @@ def main():
         plt.tight_layout()
         plt.legend(title="Structure Shape", bbox_to_anchor=(1, 0.5), loc='center left', fontsize='small')
         
-        output_path = os.path.join(script_dir, "Plots", output_filename)
-        plt.savefig(output_path, bbox_inches='tight')
+        outputPath = os.path.join(scriptDir, "Plots", outputFilename)
+        plt.savefig(outputPath, bbox_inches='tight')
         plt.close()
-        print(f"Saved Average Curve Plot: {output_path}")
+        print(f"Saved Average Curve Plot: {outputPath}")
 
-    # 8. Plot my final average curves for T, A, and R
-    # Updated text to include (%)
-    create_average_curve_plot('T', "Average Transmittance by Structure Type", "Average Transmittance (%)", "Plot_4_Average_Transmittance.png")
-    create_average_curve_plot('A', "Average Absorbance by Structure Type", "Average Absorbance (%)", "Plot_5_Average_Absorbance.png")
-    create_average_curve_plot('R', "Average Reflectance by Structure Type", "Average Reflectance (%)", "Plot_6_Average_Reflectance.png")
+    CreateAverageCurvePlot('T', "Average Transmittance by Structure Type", "Average Transmittance (%)", "Plot_4_Average_Transmittance.png")
+    CreateAverageCurvePlot('A', "Average Absorbance by Structure Type", "Average Absorbance (%)", "Plot_5_Average_Absorbance.png")
+    CreateAverageCurvePlot('R', "Average Reflectance by Structure Type", "Average Reflectance (%)", "Plot_6_Average_Reflectance.png")
 
-    print("\nAll of my analysis plots have been generated successfully!")
+    print("\nFinished Generating Analysis Plots!")
 
 if __name__ == "__main__":
-    main()
+    ExtractAndPlotData()
