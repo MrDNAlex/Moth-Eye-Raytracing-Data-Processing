@@ -31,7 +31,6 @@ def ExtractPowerAndRays(file, fullPath):
     return [Stats["CapturedPower"], Stats["StartRays"], Stats["CapturedRays"]]
 
 def GetPowerFromFile(file, fullPath):
-    
     with open(os.path.join(fullPath, file), "r") as f:
         data = json.load(f)
         
@@ -39,19 +38,14 @@ def GetPowerFromFile(file, fullPath):
     return Stats["CapturedPower"] / Stats["StartRays"]
 
 def ExtractData(commonPath, specificPaths : list[str]):
-
     dataframe = pd.DataFrame()
     
     for i in range(len(specificPaths)):
-        
         path = specificPaths[i]
-        
         fullDataPath = os.path.join(commonPath, "Data", path)
-        
         folders = [f for f in os.listdir(fullDataPath) if os.path.isdir(os.path.join(fullDataPath, f))]
         
         for fol in folders:
-            
             def extract_number(filename):
                 match = re.search(r"Waveguide(\d+)", filename)
                 return int(match.group(1)) if match else -1
@@ -63,11 +57,8 @@ def ExtractData(commonPath, specificPaths : list[str]):
             )
         
             for j in range(len(files)):
-                
                 f = files[j]
-                
                 dataframe.loc[j, "Layers"] = f.split("Waveguide")[1].split("Large")[0].split("UnitCell")[0]
-                
                 data = ExtractPowerAndRays(f, os.path.join(fullDataPath, fol))
                 
                 dataframe.loc[j, f"{path}_{fol}_CapturedPower"] = data[0]
@@ -76,47 +67,49 @@ def ExtractData(commonPath, specificPaths : list[str]):
         
     dataframe.to_csv(f"{commonPath}/InternalReflectionsWaveguide.csv", index=False)
 
-def PlotInternalReflections(commonPath, specificPath):
+def PlotPairedInternalReflections(commonPath, pairName, pathLeft, pathRight):
+    
+    fullPlotPath = os.path.join(commonPath, "Plots", pairName)
 
-    fullPlotPath = os.path.join(commonPath, "Plots", specificPath)
-
-    # Re-applied the makedirs fix to prevent crashes
     if not os.path.exists(fullPlotPath):
         os.makedirs(fullPlotPath, exist_ok=True)
 
     dataframe = pd.read_csv(f"{commonPath}/InternalReflectionsWaveguide.csv")
 
-    plt.figure(figsize=(16, 10))
+    # Create a figure with 1 row, 2 columns. sharey=True aligns their Y-axis.
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 10), sharey=True)
 
     cmap = plt.get_cmap('magma')
     colors = [cmap(i / 15) for i in range(15)]
 
-    for i in range(1, 16):
-
-        # Use the original folder name for the dataframe lookup
-        folder_name = f"QD{i}"
+    # Loop over both axes and their respective path string
+    for ax, specificPath in zip([ax1, ax2], [pathLeft, pathRight]):
         
-        # Use the formatted name for the graph legend
-        display_label = f"{i} QDs"
+        for i in range(1, 16):
+            folder_name = f"QD{i}"
+            display_label = f"{i} QDs"
 
-        powerPercent = dataframe[f"{specificPath}_{folder_name}_CapturedPower"] / dataframe[f"{specificPath}_{folder_name}_StartRays"] * 100
+            powerPercent = dataframe[f"{specificPath}_{folder_name}_CapturedPower"] / dataframe[f"{specificPath}_{folder_name}_StartRays"] * 100
 
-        plt.plot(dataframe["Layers"], powerPercent, label=display_label, color=colors[i-1])
+            ax.plot(dataframe["Layers"], powerPercent, label=display_label, color=colors[i-1])
 
-    # The title now pulls the combined name and simplified definition directly from the dictionary below
-    plt.title(f"TIR Power Absorbed from QD Emission using a {paths[specificPath]}")
-    plt.xlabel("Number of Layers")
-    plt.ylabel("Absorbed Power (%)")
-    plt.grid(True, alpha=0.6)
+        # Set individual titles from our paths dictionary
+        ax.set_title(f"TIR Power Absorbed: {paths[specificPath]}")
+        ax.set_xlabel("Number of Layers")
+        ax.grid(True, alpha=0.6)
+        
+        # Only set the Y label on the leftmost graph
+        if ax == ax1:
+            ax.set_ylabel("Absorbed Power (%)")
+
+    # Add one legend to the rightmost graph, placing it outside the plot area
+    ax2.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     
-    # Centered outside legend
-    plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     plt.tight_layout()
-    
-    plt.savefig(f"{fullPlotPath}/Internal_Reflection_Power_Absorbed_{specificPath}_Waveguide.png")
+    plt.savefig(f"{fullPlotPath}/Internal_Reflection_Power_Absorbed_{pairName}_Combined.png")
     plt.close()
 
-# The simplified definitions are now baked right into the titles with a newline character (\n)
+# Simplified definitions baked into titles
 paths = {
     "Cone_Large_Regular" : "Cone QD and Linear GRIN\n(Isolated Device-Scale Structure)",
     "Cone_Large_MothEye": "Cone QD and Approximated GRIN\n(Isolated Device-Scale Structure)",
@@ -128,7 +121,18 @@ paths = {
     "QD_UnitCell_MothEye": "Circular QD and Approximated GRIN\n(Single Repeating Unit Cell)",
 }
 
-#ExtractData("Initial-Raytracing/InternalReflections", list(paths.keys()))
+# Define the pairs I want to plot together
+# Format: ("Save_Folder_Name", "Left_Graph_Key", "Right_Graph_Key")
+pairs = [
+    ("Cone_Large", "Cone_Large_Regular", "Cone_Large_MothEye"),
+    ("Cone_UnitCell", "Cone_UnitCell_Regular", "Cone_UnitCell_MothEye"),
+    ("QD_Large", "QD_Large_Regular", "QD_Large_MothEye"),
+    ("QD_UnitCell", "QD_UnitCell_Regular", "QD_UnitCell_MothEye")
+]
 
-#for path in paths.keys():
-#    PlotInternalReflections("Initial-Raytracing/InternalReflections", path)
+# Uncomment to extract data
+# ExtractData("Initial-Raytracing/InternalReflections", list(paths.keys()))
+
+# Loop through the pairs and plot them
+for pair in pairs:
+    PlotPairedInternalReflections("Initial-Raytracing/InternalReflections", pair[0], pair[1], pair[2])
