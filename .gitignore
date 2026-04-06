@@ -13,3 +13,12 @@
 /Solcore/Simulations-Prelim-V9
 /Symposium-Graphing/Processed/Plots
 /Initial-Raytracing/MaxCaptureAngle/Plots
+/Final-Report/Data
+/Final-Report/Plots
+/Initial-Raytracing/InternalReflections/Data
+/Initial-Raytracing/InternalReflectionsWaves/Data
+/Initial-Raytracing/RealLifeResults/Data
+*.pyc
+/Initial-Raytracing/InternalReflections/Plots
+/Initial-Raytracing/InternalReflectionsWaves/Plots
+/Initial-Raytracing/RealLifeResults/Plots
