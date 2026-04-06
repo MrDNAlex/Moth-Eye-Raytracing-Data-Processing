@@ -87,14 +87,14 @@ def PlotMaxCaptureAngle(commonPath, specificPath):
 def PlotMaxCaptureAngleComparison(commonPath, specificPath1, specificPath2):
     
     fullDataPath1 = os.path.join(commonPath, "Data", specificPath1)
-    fullDataPath2 = os.path.join(commonPath, "Data", specificPath1)
+    fullDataPath2 = os.path.join(commonPath, "Data", specificPath2)
     fullPlotPath = os.path.join(commonPath, "Plots", "Comparison")
     
     if not os.path.exists(fullPlotPath):
         os.mkdir(fullPlotPath)
     
     files1 = [f for f in os.listdir(fullDataPath1) if os.path.isfile(os.path.join(fullDataPath1, f))]
-    files2 = [f for f in os.listdir(fullDataPath1) if os.path.isfile(os.path.join(fullDataPath1, f))]
+    files2 = [f for f in os.listdir(fullDataPath2) if os.path.isfile(os.path.join(fullDataPath2, f))]
 
     for i in range(len(files1)):
         
@@ -130,14 +130,14 @@ def PlotMaxCaptureAngleComparison(commonPath, specificPath1, specificPath2):
 def PlotMaxCaptureAngleFullComparison(commonPath, specificPath1, specificPath2):
     
     fullDataPath1 = os.path.join(commonPath, "Data", specificPath1)
-    fullDataPath2 = os.path.join(commonPath, "Data", specificPath1)
+    fullDataPath2 = os.path.join(commonPath, "Data", specificPath2)
     fullPlotPath = os.path.join(commonPath, "Plots", "FullComparison")
     
     if not os.path.exists(fullPlotPath):
         os.mkdir(fullPlotPath)
     
     files1 = [f for f in os.listdir(fullDataPath1) if os.path.isfile(os.path.join(fullDataPath1, f))]
-    files2 = [f for f in os.listdir(fullDataPath1) if os.path.isfile(os.path.join(fullDataPath1, f))]
+    files2 = [f for f in os.listdir(fullDataPath2) if os.path.isfile(os.path.join(fullDataPath2, f))]
 
     def extract_number(filename):
         match = re.search(r"Waveguide(\d+)", filename)
@@ -204,7 +204,7 @@ def PlotMaxCaptureAngleFullComparison(commonPath, specificPath1, specificPath2):
 def PlotMaxCaptureAngleFullComparisonLinear(commonPath, specificPath1, specificPath2):
     
     fullDataPath1 = os.path.join(commonPath, "Data", specificPath1)
-    fullDataPath2 = os.path.join(commonPath, "Data", specificPath1)
+    fullDataPath2 = os.path.join(commonPath, "Data", specificPath2)
     fullPlotPath = os.path.join(commonPath, "Plots", "FullComparison")
     
     if not os.path.exists(fullPlotPath):
@@ -293,7 +293,81 @@ def PlotMaxCaptureAngleFullComparisonApproximated(commonPath, specificPath1, spe
     plt.savefig(f"{fullPlotPath}/Full_Comparison_Power_vs_Angle_Waveguide_Layers_Approximated.png")
     plt.close()
 
+def PlotSideBySideIsolated(commonPath, pathApprox, pathLinear):
+    
+    fullDataPathApprox = os.path.join(commonPath, "Data", pathApprox)
+    fullDataPathLinear = os.path.join(commonPath, "Data", pathLinear)
+    fullPlotPath = os.path.join(commonPath, "Plots", "FullComparison")
+    
+    os.makedirs(fullPlotPath, exist_ok=True)
+    
+    def extract_number(filename):
+        match = re.search(r"Waveguide(\d+)", filename)
+        return int(match.group(1)) if match else -1
+    
+    filesApprox = sorted(
+        [f for f in os.listdir(fullDataPathApprox) if f.endswith(".json")],
+        key=extract_number
+    )
+    
+    filesLinear = sorted(
+        [f for f in os.listdir(fullDataPathLinear) if f.endswith(".json")],
+        key=extract_number
+    )
+
+    # Added sharey=True here to link the y-axes
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 10), sharey=True)
+    cmap = plt.get_cmap('magma')
+    
+    max_files = max(len(filesApprox), len(filesLinear))
+    colors = [cmap(i / max_files) for i in range(max_files)]
+
+    # Plot Approximated Data (Left)
+    for i in range(0, len(filesApprox), 4):
+        file = filesApprox[i]
+        
+        with open(os.path.join(fullDataPathApprox, file), "r") as f:
+            data = json.load(f)
+                
+        power = np.array(data["Power"]) * 100
+        angles = np.array(data["Angle"])
+        layers = file.removeprefix("MaxCaptureAngleWaveguide").split("_")[0]
+        
+        ax1.plot(angles, power, color=colors[i], label=f"Approximated GRIN ({layers} Layers)")
+        
+    ax1.set_title("Transmitted Power through a Empirically Approximated GRIN\nMoth Eye AR Layer using various discretizations")
+    ax1.set_xlabel("Incident Angle (degrees)")
+    ax1.set_ylabel("Transmitted Power (%)")
+    ax1.grid(True, alpha=0.6)
+    ax1.legend(loc='best')
+
+    # Plot Linear Data (Right)
+    for i in range(0, len(filesLinear), 4):
+        file = filesLinear[i]
+        
+        with open(os.path.join(fullDataPathLinear, file), "r") as f:
+            data = json.load(f)
+
+        power = np.array(data["Power"]) * 100
+        angles = np.array(data["Angle"])
+        layers = file.removeprefix("MaxCaptureAngleWaveguide").split("_")[0]
+        
+        ax2.plot(angles, power, color=colors[i], label=f"Linear GRIN ({layers.split('.')[0]} Layers)")
+        
+    ax2.set_title("Transmitted Power through a Linear GRIN\nMoth Eye AR Layer using various discretizations")
+    ax2.set_xlabel("Incident Angle (degrees)")
+    # Removed ax2.set_ylabel so it doesn't clutter the shared axis
+    ax2.grid(True, alpha=0.6)
+    ax2.legend(loc='best')
+    
+    plt.tight_layout()
+    plt.savefig(f"{fullPlotPath}/Side_By_Side_Isolated_Power_vs_Angle.png", bbox_inches='tight')
+    plt.close()
 #ExtractData("Initial-Raytracing/MaxCaptureAngle", ["MothEye", "Regular"])
+#PlotMaxCaptureAngle("Initial-Raytracing/MaxCaptureAngle", "MothEye")
+#PlotMaxCaptureAngle("Initial-Raytracing/MaxCaptureAngle", "Regular")
+#PlotMaxCaptureAngleComparison("Initial-Raytracing/MaxCaptureAngle", "MothEye", "Regular")
 #PlotMaxCaptureAngleFullComparison("Initial-Raytracing/MaxCaptureAngle", "MothEye", "Regular")
 #PlotMaxCaptureAngleFullComparisonLinear("Initial-Raytracing/MaxCaptureAngle", "MothEye", "Regular")
 #PlotMaxCaptureAngleFullComparisonApproximated("Initial-Raytracing/MaxCaptureAngle", "MothEye", "Regular")
+PlotSideBySideIsolated("Initial-Raytracing/MaxCaptureAngle", "MothEye", "Regular")
